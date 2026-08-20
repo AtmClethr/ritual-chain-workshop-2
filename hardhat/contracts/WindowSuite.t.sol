@@ -279,4 +279,41 @@ contract WindowSuite is Test {
         vm.expectRevert(RitualPredict.BadFeed.selector);
         w.createMarket(p);
     }
+
+    function testTwoSlipsKeepOwnPots() public {
+        uint256 a = _id();
+        RitualPredict.NewMarket memory p = _p();
+        p.question = "Does the late race print 3500?";
+        p.target = 3500;
+        uint256 b = w.createMarket(p);
+        vm.prank(ann);
+        w.bet{value: 3 ether}(a, true);
+        vm.prank(ben);
+        w.bet{value: 2 ether}(b, false);
+        assertEq(w.getMarket(a).totalYes, 3 ether);
+        assertEq(w.getMarket(a).totalNo, 0);
+        assertEq(w.getMarket(b).totalYes, 0);
+        assertEq(w.getMarket(b).totalNo, 2 ether);
+        RitualPredict.Market[] memory board = w.getMarkets();
+        assertEq(board.length, 2);
+        assertEq(board[0].id, b);
+        assertEq(board[1].id, a);
+    }
+
+    function testRingOneLeavesTheOtherLive() public {
+        uint256 a = _id();
+        RitualPredict.NewMarket memory p = _p();
+        p.question = "Second window still selling";
+        p.bettingSeconds = 300;
+        uint256 b = w.createMarket(p);
+        vm.prank(ann);
+        w.bet{value: 1 ether}(a, true);
+        vm.prank(ben);
+        w.bet{value: 1 ether}(a, false);
+        _ring(a);
+        assertEq(uint8(w.getMarket(a).state), uint8(RitualPredict.MarketState.Resolved));
+        assertEq(uint8(w.getMarket(b).state), uint8(RitualPredict.MarketState.Open));
+        assertEq(w.getMarket(b).totalYes, 0);
+        assertEq(w.getMarket(b).observedValue, 0);
+    }
 }

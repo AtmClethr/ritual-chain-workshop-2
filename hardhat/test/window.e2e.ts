@@ -93,4 +93,34 @@ describe("window e2e", async function () {
     const after = await pub.getBalance({ address: ann.account.address });
     assert.equal(after + rec.gasUsed * rec.effectiveGasPrice - before, parseEther("2"));
   });
+
+  it("two windows keep their own pots", async function () {
+    const { win, agenda } = await booth();
+    const late = {
+      ...slip,
+      question: "Does the late race print 3500?",
+      target: 3500n,
+      bettingSeconds: 300n,
+    };
+    await win.write.createMarket([slip]);
+    const first = await win.read.marketCount();
+    await win.write.createMarket([late]);
+    const second = await win.read.marketCount();
+    await win.write.bet([first, true], { account: ann.account, value: parseEther("3") });
+    await win.write.bet([second, false], { account: ben.account, value: parseEther("2") });
+    const row = await win.read.getMarket([first]);
+    const now = await pub.getBlockNumber();
+    if (row.resolveBlock > now) await networkHelpers.mine(Number(row.resolveBlock - now));
+    await agenda.write.ping([row.scheduleId, 0n]);
+    const done = await win.read.getMarket([first]);
+    const other = await win.read.getMarket([second]);
+    assert.equal(done.state, 3);
+    assert.equal(done.outcome, 1);
+    assert.equal(other.state, 0);
+    assert.equal(other.totalNo, parseEther("2"));
+    assert.equal(other.totalYes, 0n);
+    const board = await win.read.getMarkets();
+    assert.equal(board.length, 2);
+    assert.equal(board[0].id, second);
+  });
 });

@@ -9,3 +9,5 @@ Think racetrack window, not a dapp.
 - Clock is blocks. I don't touch `block.timestamp` (it's milliseconds on this chain anyway).
 
 Helpers I actually used in the booth UI: `clockFor`, `matchesRule`, `escrowUntil`.
+
+The board is supposed to hold more than one slip. Pots do not mix: ringing window A leaves window B selling.
