@@ -1,13 +1,10 @@
-# Ritual Predict
+# Ticket Window
 
-A self-resolving binary prediction market on [Ritual Chain](https://docs.ritualfoundation.org).
+A **booth** on [Ritual Chain](https://docs.ritualfoundation.org). You stamp a slip. The Scheduler
+rings the bell. HTTP `0x0801` + jq `0x0803` print the number. A dead tape is never a NO.
 
-Create a market like _"Will ETH/USD be at least $4,000 when this market resolves?"_, stake native
-RITUAL on YES or NO, and watch it settle itself. When the betting window closes, **nobody presses a
-resolve button and no backend cron job runs**. The Ritual Scheduler wakes the contract at a block
-fixed when the market was created; the contract calls the HTTP precompile to read the configured
-oracle URL, extracts one number with the jq precompile, compares it to the target, and settles.
-Winners then pull their proportional share of the pool.
+Navy/gold UI in `web/`. How it is wired: [WIRING.md](./WIRING.md). How to check: [RUN.md](./RUN.md).
+The snag: [SNAG.md](./SNAG.md).
 
 ---
 
@@ -85,12 +82,11 @@ takes their stake back.
 - Node.js 20+ and `pnpm`
 - A wallet with testnet RITUAL from <https://faucet.ritualfoundation.org>
 
-## Setup
+## Local booth
 
 ```bash
-cd hardhat
-pnpm install
-cp .env.example .env
+cd hardhat && pnpm install && pnpm exec hardhat test
+cd ../web && pnpm install && pnpm dev
 ```
 
 ---
