@@ -1,9 +1,11 @@
-# Wiring
+# Booth notes
 
-This booth files a market and lets Ritual's Scheduler ring the bell.
+Think racetrack window, not a dapp.
 
-One knock: pick an HTTP TEE, GET the tape (`0x0801`), jq a uint256 (`0x0803`),
-compare to the frozen target. A dead wire is never a NO. Three misses scratch
-the slip. Tiny bets under 0.002 and fat bets over 50 RITUAL are refused.
+- You stamp a slip (`createMarket`). That also books the wake-up. No second tx.
+- Tickets: `FLOOR_BET` 0.002 RITUAL, `CEIL_BET` 50. Dust and whales both bounce.
+- Bell: Scheduler, not me. I don't have a resolve button on purpose.
+- Tape: GET then jq `.price`. If the tape is dead, the slip is scratched after three tries. We do not invent a NO.
+- Clock is blocks. I don't touch `block.timestamp` (it's milliseconds on this chain anyway).
 
-UI is a navy/gold **Ticket Window**, not a dashboard and not a newspaper.
+Helpers I actually used in the booth UI: `clockFor`, `matchesRule`, `escrowUntil`.

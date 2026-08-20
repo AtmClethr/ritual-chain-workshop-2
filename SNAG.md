@@ -1,8 +1,9 @@
-# Snag
+# What actually bit me
 
-The callback must not revert on a garbled HTTP envelope. A revert would
-rewind `attempts` and the slip could never scratch. `_hitWire` uses
-`try this.decodeHttpResponse`. Only a non-Scheduler caller reverts.
+Two different revert reasons look the same in a wallet: `ZeroStake` and `TinyBet`.
 
-Compile: HTTP fake fallback cannot be `payable` when tests cast `0x0801`.
-jq fake fallback cannot be `view`. Both are plain `fallback()`.
+I put `FLOOR_BET = 0.002 ether`. First test sent `0.001 ether` and I kept debugging `ZeroStake` because that's what the workshop slides talk about. The tx was reverting `TinyBet`. Same for the top: `51 ether` is `FatBet`, not "betting closed".
+
+Took me a minute to print the custom error selector instead of guessing from the UI.
+
+Also: in `FakeWire` I named a public string `msg`. Solc hates that (`msg` is reserved). It's `msg_` now.

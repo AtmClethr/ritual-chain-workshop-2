@@ -66,7 +66,7 @@ export default function WindowPage() {
           </p>
           <h1 className="text-4xl font-semibold tracking-tight">Ticket Window</h1>
           <p className="mt-1 text-sm text-[var(--cyan)]">
-            The bell rings itself. Scheduler. HTTP. jq.
+            Clerk hours. You sell the slip. The tape settles it.
           </p>
         </div>
         <div className="font-[family-name:var(--f-mono)] text-xs">

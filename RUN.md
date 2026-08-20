@@ -1,20 +1,20 @@
-# Run
+# I ran this
 
-```bash
-cd hardhat
-pnpm install
+From `hardhat/`:
+
+```
 pnpm exec hardhat test
-# 28 solidity (WindowSuite) + 2 window.e2e walks
 ```
 
-Walks:
+Last print: **30 passing** (28 in `WindowSuite`, 2 in `window.e2e.ts`).
 
-- YES 3 vs NO 1, tape 4300 vs 4000 → paid YES, winner takes 4
-- wire killed 3 times → SCRATCH, 2 returned
+Walk A: Ann 3 YES, Ben 1 NO, tape 4300, target 4000 → Ann walks with 4.
+Walk B: kill the tape three times → scratch, Ann gets 2 back.
 
-```bash
-cd web
-pnpm install
-pnpm dev
-# GET /api/oracle/eth
+Web:
+
 ```
+cd web && pnpm dev
+```
+
+Tape is `/api/oracle/eth`. If you point the slip at localhost, the contract will `BadFeed` you. Tunnel it.

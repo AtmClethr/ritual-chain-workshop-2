@@ -8,7 +8,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--f-mono" });
 
 export const metadata: Metadata = {
   title: "Ticket Window — Ritual",
-  description: "A booth that rings its own bell. Scheduler + HTTP + jq.",
+  description: "Racetrack booth on Ritual. Stamp a slip. The tape calls the race.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

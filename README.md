@@ -1,10 +1,10 @@
 # Ticket Window
 
-A **booth** on [Ritual Chain](https://docs.ritualfoundation.org). You stamp a slip. The Scheduler
-rings the bell. HTTP `0x0801` + jq `0x0803` print the number. A dead tape is never a NO.
+Racetrack booth. Stamp a slip, sell tickets, go home. The chain rings the bell
+(`0x0801` + `0x0803`). I don't sit on a resolve button.
 
-Navy/gold UI in `web/`. How it is wired: [WIRING.md](./WIRING.md). How to check: [RUN.md](./RUN.md).
-The snag: [SNAG.md](./SNAG.md).
+Navy and gold, clerk copy, no dashboard chrome. Notes: [WIRING.md](./WIRING.md) ·
+[RUN.md](./RUN.md) · [SNAG.md](./SNAG.md) (TinyBet vs ZeroStake, not the lecture).
 
 ---
 
