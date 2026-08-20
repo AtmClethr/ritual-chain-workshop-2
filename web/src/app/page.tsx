@@ -2,8 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { formatEther, parseEther } from "viem";
-import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
-import { explorer, faucet, tunnel, windowAddr } from "@/config/net";
+import {
+  useAccount,
+  useChainId,
+  useConnect,
+  useDisconnect,
+  useReadContract,
+  useSwitchChain,
+} from "wagmi";
+import { faucet, ritual, tunnel, windowAddr } from "@/config/net";
 import { ticketAbi } from "@/abi/ticket";
 import { useTx } from "@/hooks/useTx";
 
@@ -36,12 +43,46 @@ function rit(n?: bigint) {
   return `${Number(formatEther(n)).toFixed(3)} RIT`;
 }
 
+function tillCopy(raw: string) {
+  if (/has not been authorized yet/i.test(raw)) {
+    return "This origin is not on the wallet's list. Approve http://localhost:3000 in the extension, then Open till again.";
+  }
+  if (/rejected|denied|cancel/i.test(raw)) return "Clerk cancelled the stamp.";
+  return raw.split("\n")[0] || "Till jammed.";
+}
+
 export default function WindowPage() {
   const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { connectAsync, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const tx = useTx();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+  const [tillNote, setTillNote] = useState<string | null>(null);
   const wired = Boolean(windowAddr);
+  const offRail = isConnected && chainId !== ritual.id;
+
+  async function openTill() {
+    const c = connectors[0];
+    if (!c) {
+      setTillNote("No till on this counter. Install a wallet.");
+      return;
+    }
+    setTillNote(null);
+    try {
+      await connectAsync({ connector: c });
+    } catch (e) {
+      setTillNote(tillCopy(e instanceof Error ? e.message : String(e)));
+    }
+  }
+
+  async function switchRail() {
+    setTillNote(null);
+    try {
+      await switchChainAsync({ chainId: ritual.id });
+    } catch (e) {
+      setTillNote(tillCopy(e instanceof Error ? e.message : String(e)));
+    }
+  }
 
   const { data: rows, refetch } = useReadContract({
     address: windowAddr,
@@ -77,11 +118,20 @@ export default function WindowPage() {
           ) : (
             <button
               className="rounded border border-[var(--gold)] px-3 py-1 text-[var(--gold)]"
-              onClick={() => connectors[0] && connect({ connector: connectors[0] })}
+              onClick={() => void openTill()}
             >
               Open till
             </button>
           )}
+          {offRail && (
+            <button
+              className="mt-2 block w-full rounded border border-red-400/70 px-3 py-1 text-red-300"
+              onClick={() => void switchRail()}
+            >
+              Wrong rail · switch to 1979
+            </button>
+          )}
+          {tillNote && <p className="mt-2 max-w-[16rem] text-right text-[11px] text-red-400">{tillNote}</p>}
           <div className="mt-2 text-right opacity-80">escrow {rit(till as bigint | undefined)}</div>
           <a className="block text-right underline opacity-70" href={faucet} target="_blank" rel="noreferrer">
             faucet
@@ -100,10 +150,10 @@ export default function WindowPage() {
           <h2 className="font-[family-name:var(--f-mono)] text-xs tracking-widest text-[var(--gold)]">
             ISSUE A SLIP
           </h2>
-          <Issue ready={isConnected && wired} tx={tx} onDone={() => void refetch()} />
+          <Issue ready={isConnected && wired && !offRail} onDone={() => void refetch()} />
         </section>
         <aside className="lg:col-span-2 space-y-6">
-          <Escrow ready={isConnected && wired} tx={tx} />
+          <Escrow ready={isConnected && wired && !offRail} />
           <Tape />
         </aside>
       </div>
@@ -113,7 +163,7 @@ export default function WindowPage() {
         <div className="mt-3 space-y-4">
           {list.length === 0 && <p className="text-sm opacity-60">No slips yet.</p>}
           {list.map((r) => (
-            <Slip key={r.id.toString()} row={r} me={address} ready={isConnected && wired} tx={tx} onDone={() => void refetch()} />
+            <Slip key={r.id.toString()} row={r} me={address} ready={isConnected && wired && !offRail} onDone={() => void refetch()} />
           ))}
         </div>
       </section>
@@ -123,13 +173,12 @@ export default function WindowPage() {
 
 function Issue({
   ready,
-  tx,
   onDone,
 }: {
   ready: boolean;
-  tx: ReturnType<typeof useTx>;
   onDone: () => void;
 }) {
+  const tx = useTx();
   const [q, setQ] = useState("Does ETH print 4000+ at the bell?");
   const [url, setUrl] = useState(tunnel);
   const [path, setPath] = useState(".price");
@@ -194,7 +243,8 @@ function Issue({
   );
 }
 
-function Escrow({ ready, tx }: { ready: boolean; tx: ReturnType<typeof useTx> }) {
+function Escrow({ ready }: { ready: boolean }) {
+  const tx = useTx();
   const [amt, setAmt] = useState("0.35");
   return (
     <div className="rounded-lg border border-white/10 bg-[var(--panel)] p-5">
@@ -219,6 +269,7 @@ function Escrow({ ready, tx }: { ready: boolean; tx: ReturnType<typeof useTx> })
       >
         Seat escrow
       </button>
+      {tx.err && <p className="mt-2 text-xs text-red-400">{tx.err}</p>}
     </div>
   );
 }
@@ -227,9 +278,14 @@ function Tape() {
   const [px, setPx] = useState<number | null>(null);
   const [edit, setEdit] = useState("4300");
   async function load() {
-    const r = await fetch("/api/oracle/eth", { cache: "no-store" });
-    const j = (await r.json()) as { price: number };
-    setPx(j.price);
+    try {
+      const r = await fetch("/api/oracle/eth", { cache: "no-store" });
+      if (!r.ok) return;
+      const j = (await r.json()) as { price?: number };
+      if (typeof j.price === "number") setPx(j.price);
+    } catch {
+      /* tape stays quiet if the printer is down */
+    }
   }
   useEffect(() => {
     void load();
@@ -256,7 +312,9 @@ function Tape() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ price: Number(edit) }),
-            }).then(load);
+            })
+              .then(load)
+              .catch(() => undefined);
           }}
         >
           Print
@@ -273,15 +331,14 @@ function Slip({
   row,
   me,
   ready,
-  tx,
   onDone,
 }: {
   row: Row;
   me?: `0x${string}`;
   ready: boolean;
-  tx: ReturnType<typeof useTx>;
   onDone: () => void;
 }) {
+  const tx = useTx();
   const [stake, setStake] = useState("0.05");
   const pool = row.totalYes + row.totalNo;
   const yesPct = pool === 0n ? 50 : Number((row.totalYes * 1000n) / pool) / 10;
@@ -342,6 +399,7 @@ function Slip({
           Scratch {rit(claimable)}
         </button>
       )}
+      {tx.err && <p className="mt-2 text-xs text-red-400">{tx.err}</p>}
     </article>
   );
 }

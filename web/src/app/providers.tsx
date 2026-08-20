@@ -7,7 +7,7 @@ import { cfg } from "@/config/net";
 export function Providers({ children }: { children: React.ReactNode }) {
   const [q] = useState(() => new QueryClient());
   return (
-    <WagmiProvider config={cfg}>
+    <WagmiProvider config={cfg} reconnectOnMount={false}>
       <QueryClientProvider client={q}>{children}</QueryClientProvider>
     </WagmiProvider>
   );

@@ -18,3 +18,5 @@ cd web && pnpm dev
 ```
 
 Tape is `/api/oracle/eth`. If you point the slip at localhost, the contract will `BadFeed` you. Tunnel it.
+
+If a wallet overlay yells "source has not been authorized", that's the extension, not the tape. Approve `http://localhost:3000` in the wallet, or use one that already trusts the origin. The booth is chain 1979.

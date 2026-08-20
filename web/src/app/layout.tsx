@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -15,6 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen antialiased">
+        <Script id="till-origin" strategy="beforeInteractive">
+          {`(function(){function hush(ev){var r=ev.reason;var m=typeof r==="string"?r:(r&&r.message)||"";if(String(m).indexOf("has not been authorized yet")!==-1){ev.preventDefault();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}}window.addEventListener("unhandledrejection",hush);})();`}
+        </Script>
         <Providers>{children}</Providers>
       </body>
     </html>

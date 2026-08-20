@@ -23,6 +23,9 @@ export const ritual = defineChain({
 export const cfg = createConfig({
   chains: [ritual],
   connectors: [injected({ shimDisconnect: true })],
+  // SubWallet (and friends) announce via EIP-6963 then throw
+  // "source has not been authorized yet" on localhost. Don't probe them.
+  multiInjectedProviderDiscovery: false,
   ssr: true,
   transports: { [ritual.id]: http(rpc) },
 });
